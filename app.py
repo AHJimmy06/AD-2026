@@ -1,9 +1,9 @@
+import threading
+
 from flask import Flask, jsonify, request
 import os
 import certifi
 import pytds
-import time
-import threading
 
 app = Flask(__name__)
 produck_lock = threading.Lock()
@@ -18,10 +18,10 @@ produck_lock = threading.Lock()
        # 'TrustServerCertificate=yes'
    # )
 
-def getConection():
+def getConnection():
     return pytds.connect(
         server=os.environ["DB_SERVER"],
-        database=os.environ['DB_NAME'],
+        database=os.environ['DB_DATABASE'],
         user=os.environ['DB_USER'],
         password=os.environ['DB_PASSWORD'],
         port=1433,
@@ -35,7 +35,7 @@ def getConection():
 @app.route('/test-db', methods=['GET'])
 def test_db():
     try:
-        conn = getConection()
+        conn = getConnection()
         cursor = conn.cursor()
         cursor.execute("select DB_NAME()")
         database = cursor.fetchone()[0]
@@ -54,7 +54,7 @@ def test_db():
 @app.route('/api/products', methods=['GET'])
 def get_productos():
     try:
-        conn = getConection()
+        conn = getConnection()
         cursor = conn.cursor()
 
         cursor.execute("SELECT id, names, price, stock, version FROM products_vw")
@@ -81,7 +81,7 @@ def get_productos():
 @app.route('/api/products/<int:id>', methods=['GET'])
 def get_producto(id):
     try:
-        conn = getConection()
+        conn = getConnection()
         cursor = conn.cursor()
         cursor.execute("SELECT id, names, price, stock, version FROM products WHERE id = ?", id)
         row = cursor.fetchone()
@@ -120,7 +120,7 @@ def create_producto():
         if not names or price is None or stock is None:
             return jsonify({"mensaje": "faltan datos"}), 400
 
-        conn = getConection()
+        conn = getConnection()
         cursor = conn.cursor()
         cursor.execute("exec products_insert_sp ?, ?, ?", (names, price, stock))
         conn.commit()
@@ -142,7 +142,7 @@ def update_producto():
         if not data:
             return jsonify({"error": "no hay datos"}), 400
 
-        conn = getConection()
+        conn = getConnection()
         cursor = conn.cursor()
         time.sleep(5) 
 
@@ -175,7 +175,7 @@ def update_lock():
 
         with produck_lock:
             print("Entra al bloqueo")
-            conn = getConection()
+            conn = getConnection()
             cursor = conn.cursor()
             cursor.execute("update products set names=?, price=?, stock=? where id=?",
                            data.get('names'), data.get('price'), data.get('stock'), data.get('id'))
@@ -206,7 +206,7 @@ def update_version():
         if data.get("version") is None:
             return jsonify({"error": "Faltan parametros (version)"}), 400
 
-        conn = getConection()
+        conn = getConnection()
         cursor = conn.cursor()
         
         # Corregido 's1' por '+ 1'
