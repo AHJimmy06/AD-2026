@@ -21,13 +21,13 @@ produck_lock = threading.Lock()
 def getConnection():
     return pytds.connect(
         server=os.environ["DB_SERVER"],
-        database=os.environ['DB_NAME'],
-        user=os.environ['DB_USER'],
-        password=os.environ['DB_PASSWORD'],
-        port=1433,
-        cafile=certifi.where(),
-        validate_host=True
-        row_strategy=pytds.namedtuple_row_strategy
+        database = os.environ['DB_NAME'],
+        user = os.environ['DB_USER'],
+        password = os.environ['DB_PASSWORD'],
+        port = 1433,
+        cafile = certifi.where(),
+        validate_host = True,
+        row_strategy = pytds.namedtuple_row_strategy
     )
 
 
